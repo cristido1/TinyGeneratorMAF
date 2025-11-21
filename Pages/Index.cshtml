@@ -1,0 +1,68 @@
+﻿@page
+@model TinyGenerator.Pages.IndexModel
+@{
+    ViewData["Title"] = "TinyGenerator";
+}
+
+<div class="container">
+    <div class="d-flex align-items-center mb-3">
+        <h2 class="me-3">TinyGenerator</h2>
+        <small class="text-muted">Seleziona un'azione</small>
+    </div>
+
+    <div class="keep-container mt-2">
+        <a class="note-card" asp-page="/Genera">
+            <i class="note-card-icon bi bi-pencil-square" aria-hidden="true"></i>
+            <div class="note-title">Genera storia</div>
+            <div class="note-body">Avvia il processo guidato per creare una storia completa (trama, personaggi, capitoli).</div>
+        </a>
+
+        <a class="note-card" asp-page="/Stories/Index">
+            <i class="note-card-icon bi bi-journal-text" aria-hidden="true"></i>
+            <div class="note-title">Storie salvate</div>
+            <div class="note-body">Visualizza, cancella o esporta le generazioni salvate in precedenza.</div>
+        </a>
+
+        <a class="note-card" asp-page="/Admin">
+            <i class="note-card-icon bi bi-graph-up" aria-hidden="true"></i>
+            <div class="note-title">Pannello Admin</div>
+            <div class="note-body">Controllo costi, limiti token e configurazioni amministrative.</div>
+        </a>
+
+        <a class="note-card" asp-page="/Logs/Index">
+            <i class="note-card-icon bi bi-list-check" aria-hidden="true"></i>
+            <div class="note-title">Logs</div>
+            <div class="note-body">Visualizza i log dell'applicazione e svuota la tabella di log.</div>
+        </a>
+
+        <a class="note-card" asp-page="/Logs/LiveMonitor">
+            <i class="note-card-icon bi bi-activity" aria-hidden="true"></i>
+            <div class="note-title">Live Monitor</div>
+            <div class="note-body">Monitora in tempo reale l'attività dei modelli, gli errori e i log dell'applicazione.</div>
+        </a>
+
+        <a class="note-card" asp-page="/OllamaMonitor">
+            <i class="note-card-icon bi bi-cpu" aria-hidden="true"></i>
+            <div class="note-title">Ollama Monitor</div>
+            <div class="note-body">Visualizza lo stato dei modelli Ollama in esecuzione e l'ultimo prompt inviato ad ogni modello.</div>
+        </a>
+
+        <a class="note-card" asp-page="/Models">
+            <i class="note-card-icon bi bi-diagram-3" aria-hidden="true"></i>
+            <div class="note-title">Modelli</div>
+            <div class="note-body">Visualizza, testa e valuta la compatibilità dei modelli AI disponibili.</div>
+        </a>
+
+        <a class="note-card agent-card" asp-page="/Agents/Index">
+            <i class="note-card-icon bi bi-people" aria-hidden="true"></i>
+            <div class="note-title">Agents</div>
+            <div class="note-body">Crea e gestisci agenti riutilizzabili (coordinator, writer, musician, tts, ecc.).</div>
+        </a>
+
+        <a class="note-card" asp-page="/TestDefinitions/Index">
+            <i class="note-card-icon bi bi-list-ul" aria-hidden="true"></i>
+            <div class="note-title">Test Definitions</div>
+            <div class="note-body">Gestisci i casi di test: prompt, comportamento atteso e plugin consentiti.</div>
+        </a>
+    </div>
+</div>

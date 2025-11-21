@@ -1,0 +1,466 @@
+/* Keep Bootstrap defaults for colors (removed local :root overrides to restore standard Bootstrap look) */
+
+/* Compact theme adjustments (reduce global font-size and paddings) */
+html, body { font-size: 14px; }
+
+/* Keep some compact table helpers */
+.models-table-wrapper { max-width: 100vw; overflow-x: auto; margin-bottom: 1.2rem; }
+.models-table { font-size: 0.95rem; }
+.models-table th, .models-table td { vertical-align: middle; }
+
+/* Prefer Bootstrap button styling but make focus/hover slightly softer */
+.btn-primary { background-color: var(--bs-primary); border-color: rgba(var(--bs-primary-rgb), 0.12); }
+.btn-primary:hover { background-color: #3f6ec0; }
+.btn:focus, .btn:active:focus, .form-control:focus { box-shadow: 0 0 0 0.15rem rgba(var(--bs-primary-rgb),0.12); }
+
+/* Home icon hacker style */
+.home-icon-link { display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; transition: all 0.3s ease; cursor: pointer; }
+.home-icon { width: 32px; height: 32px; color: #00cc99; stroke: #00cc99; filter: drop-shadow(0 0 4px rgba(0, 204, 153, 0.5)); transition: all 0.3s ease; }
+.home-icon-link:hover .home-icon { width: 36px; height: 36px; filter: drop-shadow(0 0 8px rgba(0, 204, 153, 0.8)) drop-shadow(0 0 12px rgba(0, 255, 191, 0.4)); }
+.home-icon-link:hover { transform: scale(1.1); }
+
+/* Card / grid: use neutral backgrounds and subtle borders */
+.keep-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; align-items: start; padding: 14px 6px; }
+.note-card { background: var(--bs-white); border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(20,24,32,0.04); min-height: 110px; border: 1px solid var(--bs-border-color); display:block; text-decoration:none; color:inherit; position:relative; overflow:visible; transition: all 0.3s ease; }
+.note-card::before { content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px; border-radius: 10px; background: linear-gradient(90deg, #00cc99 0%, transparent 50%, #00cc99 100%); opacity: 0; pointer-events: none; animation: none; z-index: -1; }
+.note-card:hover { transform: scale(1.03); }
+.note-card:hover::before { animation: borderOrbit 2s linear infinite; }
+.note-card:focus { outline: none; box-shadow: 0 0 0 0.06rem rgba(var(--bs-primary-rgb),0.08); }
+.note-card .note-card-icon { position: absolute; right: 12px; bottom: 8px; font-size: 84px; line-height: 1; color: #00cc99; opacity: 0.3; pointer-events: none; transform: translateZ(0); }
+.note-title { font-weight:600; margin-bottom:6px; }
+.note-body { color: #333; white-space:pre-wrap; }
+
+@keyframes borderOrbit {
+  0% { background-position: 0% 0%; opacity: 1; clip-path: polygon(0% 0%, 100% 0%, 100% 3px, 0% 3px); }
+  25% { opacity: 1; clip-path: polygon(97% 0%, 100% 0%, 100% 100%, 97% 100%); }
+  50% { opacity: 1; clip-path: polygon(0% 97%, 100% 97%, 100% 100%, 0% 100%); }
+  75% { opacity: 1; clip-path: polygon(0% 0%, 3px 0%, 3px 100%, 0% 100%); }
+  100% { opacity: 1; clip-path: polygon(0% 0%, 100% 0%, 100% 3px, 0% 3px); }
+}
+
+/* Layout: softer header and sidebar colors but keep structure */
+.app-header { background: var(--bs-light); border-bottom: 1px solid var(--bs-border-color); }
+.sidebar { width: 220px; background: var(--bs-light); border-right: 1px solid var(--bs-border-color); padding: 12px 8px; box-sizing: border-box; }
+.sidebar-link { color: #2b2f36; text-decoration:none; padding:8px 10px; border-radius:6px; display:block; }
+.sidebar-link:hover { background: rgba(34,37,48,0.04); }
+.sidebar-link.active, .sidebar-link[aria-current="page"] { background: rgba(34,37,48,0.04); font-weight:600; }
+.main-content { flex:1; background: var(--bs-white); min-height:100vh; }
+
+/* Minor helpers */
+.keep-input { background: var(--bs-white); border-radius:8px; padding:10px; box-shadow: inset 0 0 0 1px var(--bs-border-color); width:100%; }
+/* status list: container holding message blocks */
+#statusPre { background: #f7f9fb; padding:12px; border-radius:8px; border:1px solid rgba(0,0,0,0.04); white-space:pre-wrap; display:flex; flex-direction:column; gap:8px; }
+
+/* individual messages inside the status list */
+.status-msg { padding:8px 10px; background: #ffffff; border:1px solid rgba(0,0,0,0.14); border-radius:6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); color:#222; white-space:pre-wrap; }
+.status-msg.result { background: linear-gradient(180deg,#f8fbff,#ffffff); border-color: rgba(0,0,0,0.12); }
+.status-msg.error { background: linear-gradient(180deg,#fff1f0,#fff); border-color: rgba(160,20,20,0.35); color:#8a1e1e; }
+
+.table-responsive { overflow-x: auto; }
+
+/* Compact table and component tweaks */
+.models-table-wrapper { max-width: 100vw; overflow-x: auto; margin-bottom: 0.8rem; }
+.models-table { font-size: 0.9rem; }
+.models-table th, .models-table td { vertical-align: middle; padding: .4rem .5rem }
+.keep-container { gap: 10px; padding: 8px 6px; }
+.note-card { padding: 8px 10px; border-radius:6px; min-height:100px }
+.note-card .note-card-icon { font-size:64px; right:10px; bottom:6px; color: #00cc99; opacity: 0.3 }
+.note-title { font-size:.95rem; margin-bottom:4px }
+.note-body { font-size:.9rem }
+.sidebar { padding:8px 6px }
+.keep-input { padding:6px; font-size:.95rem }
+.table.table-striped, .table { font-size:.92rem }
+
+/* Ensure test definitions table shows clear borders/colors if needed (keep subtle borders, but avoid overriding Bootstrap striping) */
+.table.table-bordered {
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.table.table-bordered > :where(thead, tbody, tfoot) > tr > th,
+.table.table-bordered > :where(thead, tbody, tfoot) > tr > td {
+  border: 1px solid rgba(0,0,0,0.06);
+}
+/* Leave .table.table-striped behavior to Bootstrap's defaults so striping uses standard colors */
+
+/* Styling for the injected home icon near page titles */
+.page-title-with-home .page-home-icon { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:6px; }
+.page-title-with-home .page-home-icon:hover { background: rgba(74,123,210,0.06); }
+
+/* TestDefinitions improvements */
+.card .table-responsive { margin-top: 6px; }
+.extra-row td { background: transparent; transition: background-color 0.12s ease; }
+.extra-row.show td { background: #fbfcfd; }
+.extra-row.show td pre { background: transparent; margin:0; padding:0; }
+.btn-outline-primary i, .btn-outline-danger i, .btn-outline-secondary i { pointer-events: none; }
+
+/* DataTables: white-styled buttons for a cleaner, lighter look */
+.dt-btn-white.btn {
+  background-color: #ffffff;
+  color: #212529;
+  border: 1px solid #ced4da;
+}
+.dt-btn-white.btn:hover, .dt-btn-white.btn:focus {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+.dt-btn-white.btn:active {
+  background-color: #f0f0f0;
+}
+.dt-buttons { display:flex; gap:6px; align-items:center; }
+
+/* Ensure the DataTables search input aligns to the right when placed alongside buttons */
+.dataTables_wrapper .dataTables_filter { text-align: right; }
+
+/* Small, compact style for 'New' buttons used in DataTables toolbars */
+.btn-new-min {
+  padding: 2px 8px !important;
+  font-size: 0.75rem !important;
+  line-height: 1.1;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Global desaturation for Bootstrap buttons: keep contrast but reduce saturation */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark {
+  -webkit-filter: saturate(65%) grayscale(10%);
+  filter: saturate(65%) grayscale(10%);
+}
+
+/* Slightly more saturated on hover/focus/active to indicate interaction */
+.btn:hover,
+.btn:focus,
+.btn:active,
+.btn:active:focus {
+  -webkit-filter: saturate(85%) grayscale(4%);
+  filter: saturate(85%) grayscale(4%);
+}
+
+/* --- FONT MODERNO ------------------------------------------------------- */
+body {
+    font-family: "Poppins", "Inter", sans-serif;
+}
+
+/* Toast pastel styling (top-right toasts) */
+.toast { opacity: 0.98; }
+.toast.border-success { background: linear-gradient(180deg,#e6ffef,#ffffff); }
+.toast.border-warning { background: linear-gradient(180deg,#fff7e6,#ffffff); }
+.toast.border-danger { background: linear-gradient(180deg,#fff1f0,#ffffff); }
+.toast .toast-body { color: #222; font-size: 0.95rem; }
+.toast .btn-close { opacity: 0.8; }
+
+/* Compact toasts variant: smaller padding, margin, and font size */
+.tg-toast-sm { min-width: 220px !important; margin-top: 4px !important; }
+.tg-toast-sm .toast-body { padding: 6px 8px !important; font-size: 0.82rem !important; line-height: 1.1; }
+.tg-toast-sm .btn-close { margin-left: 6px !important; padding: 0.12rem !important; }
+.toast-container.tg-toast-sm-container { padding: 6px !important; }
+.toast-container.tg-toast-sm-container .tg-toast-sm { margin-top: 4px !important; margin-bottom: 4px !important; }
+
+/* --- ACTIVE AGENTS BADGE SYSTEM ------------------------------------------------------- */
+/* Container for agent badges (fixed position, top-left) */
+#active-agents-container {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+/* Individual agent badge */
+.agent-badge {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 250, 252, 0.98));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 120, 180, 0.2);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    animation: slideInLeft 0.3s ease-out;
+    min-width: 180px;
+    max-width: 220px;
+    pointer-events: auto;
+}
+
+.agent-badge.removing {
+    animation: slideOutLeft 0.3s ease-in forwards;
+}
+
+/* Agent badge icon (emoji) */
+.agent-badge-icon {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+/* Animazione per icona pensiero (cervello, default) */
+.agent-badge-icon.icon-thinking {
+    animation: thinking 1.5s ease-in-out infinite;
+}
+
+@keyframes thinking {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    75% { transform: scale(1.1) rotate(5deg); }
+}
+
+/* Animazione per icona scrittura (penna) */
+.agent-badge-icon.icon-writing {
+    animation: writing 1.2s ease-in-out infinite;
+}
+
+@keyframes writing {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-3px) rotate(-15deg); }
+    50% { transform: translateX(3px) rotate(15deg); }
+    75% { transform: translateX(-2px) rotate(-10deg); }
+}
+
+/* Animazione per icona TTS (bocca che parla) */
+.agent-badge-icon.icon-talking {
+    animation: talking 0.8s ease-in-out infinite;
+}
+
+@keyframes talking {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.3); }
+}
+
+/* Animazione per icona check/valutazione */
+.agent-badge-icon.icon-checking {
+    animation: checking 1.5s ease-in-out infinite;
+}
+
+@keyframes checking {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(360deg); opacity: 0.7; }
+}
+
+/* Animazione per icona musica (note musicali) */
+.agent-badge-icon.icon-music {
+    animation: music 1s ease-in-out infinite;
+}
+
+@keyframes music {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-4px) rotate(-10deg); }
+    50% { transform: translateY(0) rotate(0deg); }
+    75% { transform: translateY(-2px) rotate(10deg); }
+}
+
+/* Animazione per icona warmup (fuoco) */
+.agent-badge-icon.icon-warmup {
+    animation: warmup 0.6s ease-in-out infinite;
+}
+
+@keyframes warmup {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.15) translateY(-2px); }
+}
+
+/* Agent badge content (text) */
+.agent-badge-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.agent-badge-name {
+    font-weight: 600;
+    font-size: 11px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agent-badge-status {
+    font-size: 10px;
+    color: rgba(255,255,255,0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ensure emoji/icon contrast inside badge */
+.agent-badge-icon {
+    color: #ffffff;
+}
+
+/* Slide in/out animations */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+}
+
+/* Shimmer effect on badge background */
+.agent-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* News Ticker Styling */
+.news-ticker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(90deg, #001a00, #003300, #001a00);
+    border-top: 2px solid #00ff7f;
+    border-bottom: 2px solid #00cc99;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 15px;
+    box-shadow: 0 -4px 15px rgba(0, 255, 127, 0.2), inset 0 1px 0 rgba(0, 255, 127, 0.1);
+    font-family: 'Roboto Mono', monospace;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.news-ticker-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #00ff7f;
+    text-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+    flex-shrink: 0;
+    letter-spacing: 1px;
+    padding-right: 15px;
+    border-right: 1px solid rgba(0, 255, 127, 0.3);
+}
+
+.news-ticker-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.news-ticker-scroll {
+    display: flex;
+    gap: 40px;
+    animation: scrollNews linear infinite;
+    padding: 0 20px;
+    white-space: nowrap;
+    height: 100%;
+    align-items: center;
+}
+
+.news-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    flex-shrink: 0;
+    color: #00cc99;
+    font-size: 12px;
+    text-shadow: 0 0 5px rgba(0, 204, 153, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    user-select: none;
+    border: none;
+    background: none;
+}
+
+.news-item:hover {
+    color: #00ff7f;
+    text-shadow: 0 0 8px rgba(0, 255, 127, 0.8);
+    transform: scale(1.05);
+}
+
+.news-item::before {
+    content: '▸';
+    color: #00ff7f;
+    font-weight: bold;
+}
+
+.news-item-time {
+    font-size: 10px;
+    opacity: 0.7;
+    color: #008844;
+}
+
+@keyframes scrollNews {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Ensure body has padding-bottom for news ticker */
+body {
+    padding-bottom: 70px !important;
+}
+
+/* Prevent LiveMonitor from covering news ticker */
+.log-entry {
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+
+
+

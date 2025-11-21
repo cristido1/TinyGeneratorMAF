@@ -1,0 +1,159 @@
+@page "{id:long}"
+@model TinyGenerator.Pages.Stories.DetailsModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Dettaglio storia";
+}
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Storia ID: @Model.Story?.Id</h4>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <div class="small text-muted">Prompt: @Model.Story?.Prompt</div>
+                <div class="small text-muted">Timestamp: @Model.Story?.Timestamp</div>
+            </div>
+            <div>
+                <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Stories/Edit" asp-route-id="@Model.Story?.Id">Modifica</a>
+                <a class="btn btn-sm btn-outline-primary me-1" id="ttsPlay">Ascolta (Browser)</a>
+                <a class="btn btn-sm btn-outline-success" id="macTtsPlay">Ascolta (macOS)</a>
+            </div>
+        </div>
+        <details open>
+            <summary class="fw-bold">Valutazioni</summary>
+            <div id="evaluations" class="mt-2">
+                @if (Model.Evaluations != null && Model.Evaluations.Count > 0)
+                {
+                    foreach (var e in Model.Evaluations)
+                    {
+                        <div class="card my-2">
+                            <div class="card-body">
+                                <div><strong>@e.Model</strong> — @e.Ts — Score: @e.Score</div>
+                                <pre style="white-space:pre-wrap">@e.RawJson</pre>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted">Nessuna valutazione</div>
+                }
+            </div>
+        </details>
+
+        <details class="mt-2" open>
+            <summary class="fw-bold">Testo della storia</summary>
+            <div class="mt-2">
+                <pre style="white-space: pre-wrap;">@Model.StoryText</pre>
+            </div>
+        </details>
+
+        <audio id="ttsAudio" controls style="width:100%; display:none;" />
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var btn = document.getElementById('ttsPlay');
+            var isSpeaking = false;
+            var utterance = null;
+
+            btn?.addEventListener('click', function(){
+                if (!('speechSynthesis' in window)) {
+                    alert('Il tuo browser non supporta la sintesi vocale');
+                    return;
+                }
+
+                if (isSpeaking) {
+                    // Stop speaking
+                    window.speechSynthesis.cancel();
+                    btn.innerText = 'Ascolta';
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-outline-primary');
+                    isSpeaking = false;
+                    return;
+                }
+
+                // Get story text
+                var storyText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.StoryText ?? ""));
+                
+                if (!storyText || storyText.trim() === '') {
+                    alert('Nessun testo da leggere');
+                    return;
+                }
+
+                // Create speech utterance
+                utterance = new SpeechSynthesisUtterance(storyText);
+                utterance.lang = 'it-IT';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+
+                utterance.onstart = function() {
+                    isSpeaking = true;
+                    btn.innerText = 'Stop';
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-danger');
+                };
+
+                utterance.onend = function() {
+                    isSpeaking = false;
+                    btn.innerText = 'Ascolta';
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-outline-primary');
+                };
+
+                utterance.onerror = function(e) {
+                    console.error('Speech synthesis error:', e);
+                    isSpeaking = false;
+                    btn.innerText = 'Ascolta';
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-outline-primary');
+                    alert('Errore durante la lettura');
+                };
+
+                // Start speaking
+                window.speechSynthesis.speak(utterance);
+            });
+
+            // macOS TTS button
+            var macBtn = document.getElementById('macTtsPlay');
+            macBtn?.addEventListener('click', async function(){
+                try {
+                    macBtn.disabled = true;
+                    macBtn.innerText = 'Generazione...';
+                    var id = '@Model.Story?.Id';
+                    var token = '@Antiforgery.GetAndStoreTokens(HttpContext).RequestToken';
+                    var res = await fetch(`/Stories/Details/${id}?handler=macTts`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (!res.ok) { 
+                        var errorText = await res.text();
+                        alert('Errore TTS macOS: ' + errorText); 
+                        return; 
+                    }
+                    var j = await res.json();
+                    var audio = document.getElementById('ttsAudio');
+                    if (j && j.audio_url) {
+                        audio.src = j.audio_url; 
+                        audio.style.display = ''; 
+                        audio.play();
+                    } else {
+                        alert('Audio non generato');
+                    }
+                } catch (e) { 
+                    console.error(e); 
+                    alert('Errore TTS macOS: ' + e.message); 
+                }
+                finally { 
+                    macBtn.disabled = false; 
+                    macBtn.innerText = 'Ascolta (macOS)'; 
+                }
+            });
+        })
+    </script>
+}

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TinyGenerator</title>
+    <script type="importmap"></script>
+    <!-- Bootstrap 5 (local) -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Local copy of Bootstrap Icons (use scripts/vendor_assets.sh to fetch) -->
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- New minimalist panel design CSS -->
+    <link rel="stylesheet" href="~/css/minimalist-panels.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TinyGenerator.styles.css" asp-append-version="true" />
+    <!-- DataTables CSS (shared) -->
+    <link rel="stylesheet" href="~/lib/datatables/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables/css/buttons.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: #000000;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding: 40px 20px 70px 20px;
+        }
+        
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        main.container {
+            background: #f5f5f5;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 255, 0, 0.3);
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1, h2, h3 {
+            color: #16a34a;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(22, 163, 74, 0.5);
+        }
+        
+        .page-header-outside h1 {
+            font-size: 36px;
+            font-weight: 700;
+        }
+        
+        .btn-primary, .btn-success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover, .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.6);
+        }
+        
+        /* DataTables styling */
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        table.dataTable thead th:first-child {
+            border-top-left-radius: 10px;
+        }
+        
+        table.dataTable thead th:last-child {
+            border-top-right-radius: 10px;
+        }
+        
+        table.dataTable tbody tr {
+            transition: all 0.2s ease;
+            background: white;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background-color: #f7fafc !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 8px 14px;
+            margin: 0 2px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            border-color: #16a34a;
+            background: #16a34a !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+            color: white !important;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.5);
+        }
+        
+        /* DataTables responsive container */
+        .dataTables_wrapper {
+            overflow-x: auto;
+        }
+        
+        table.dataTable {
+            width: 100% !important;
+            table-layout: auto;
+        }
+        
+        table.dataTable th,
+        table.dataTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+        }
+        
+        /* Allow some columns to wrap */
+        table.dataTable td.wrap-text {
+            white-space: normal;
+            word-break: break-word;
+        }
+        
+        /* Fix dropdown menu positioning */
+        .dataTables_wrapper {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            z-index: 9999 !important;
+        }
+        
+        table.dataTable tbody tr {
+            position: relative;
+        }
+        
+        table.dataTable .btn-group {
+            position: static !important;
+        }
+        
+        /* Active agents badges */
+        #active-agents-container {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 220px;
+        }
+        
+        .agent-badge {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            animation: slideInLeft 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .agent-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        .agent-badge-icon {
+            font-size: 16px;
+            animation: thinking 1.5s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .agent-badge-content {
+            flex: 1;
+            min-width: 0;
+            z-index: 1;
+        }
+        
+        @@keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @@keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+        
+        @@keyframes shimmer {
+            to {
+                left: 100%;
+            }
+        }
+        
+        @@keyframes thinking {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+            }
+            25% {
+                transform: scale(1.15) rotate(-8deg);
+            }
+            75% {
+                transform: scale(1.15) rotate(8deg);
+            }
+        }
+        
+        .agent-badge.removing {
+            animation: slideOutLeft 0.3s ease-in forwards;
+        }
+        
+        .agent-badge-name {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .agent-badge-status {
+            font-size: 10px;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    
+    <!-- Active agents badges container -->
+    <div id="active-agents-container"></div>
+    <!-- Main content area with header (title + home icon) rendered by layout -->
+    @{
+        var path = Context.Request.Path.HasValue ? Context.Request.Path.Value.ToLowerInvariant() : "/";
+        var isHome = path == "/" || path == "/index" || path == "/index/";
+        var pageTitle = ViewData["Title"] as string ?? string.Empty;
+    }
+
+    <main class="container mt-4">
+        @if (!isHome && !string.IsNullOrWhiteSpace(pageTitle))
+        {
+            var pageDescription = ViewData["PageDescription"] as string ?? string.Empty;
+            <div class="d-flex align-items-center mb-3">
+                <a href="/" class="home-icon-link" title="Torna alla home" aria-label="Torna alla home">
+                    <svg class="home-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 12L12 3L21 12V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <h2 class="me-3">@pageTitle</h2>
+                @if (!string.IsNullOrWhiteSpace(pageDescription))
+                {
+                    <small class="text-muted">@pageDescription</small>
+                }
+            </div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <!-- Toast container for app-wide notifications (Bootstrap toasts) -->
+    <div id="toast-container" class="toast-container tg-toast-sm-container position-fixed top-0 end-0 p-3" style="z-index:1060;">
+        <!-- toasts appended dynamically by signalr-notifs.js -->
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Shared JS libs: jQuery (local + CDN fallback), SignalR, DataTables and Buttons -->
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');</script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/lib/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.buttons.min.js"></script>
+    <script src="~/lib/datatables/js/buttons.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/js/jszip.min.js"></script>
+    <script src="~/lib/datatables/js/pdfmake.min.js"></script>
+    <script src="~/lib/datatables/js/vfs_fonts.js"></script>
+    <script src="~/lib/datatables/js/buttons.html5.min.js"></script>
+    <script src="~/lib/datatables/js/buttons.print.min.js"></script>
+    <script src="~/lib/datatables/js/buttons.colVis.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.colReorder.min.js"></script>
+
+    <!-- News Ticker -->
+    <div id="news-ticker" class="news-ticker">
+        <div class="news-ticker-header">📰 NOTIZIE ITALIANE</div>
+        <div class="news-ticker-content">
+            <div class="news-ticker-scroll">
+                <!-- News items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Rain Effect -->
+    <script src="~/js/matrix_effect.js" asp-append-version="true"></script>
+
+    <!-- News Ticker Script -->
+    <script src="~/js/news-ticker.js" asp-append-version="true"></script>
+
+    <!-- Active Agents Badge Manager -->
+    <script src="~/js/active-agents.js" asp-append-version="true"></script>
+
+    <!-- App SignalR notification client (toasts) -->
+    <script src="~/js/signalr-notifs.js" asp-append-version="true"></script>
+    @* Render a toast from TempData if set (server-side notification to the current page) *@
+    @{
+        var tTitle = TempData["ToastTitle"] as string;
+        var tMessage = TempData["ToastMessage"] as string;
+        var tLevel = TempData["ToastLevel"] as string ?? "info";
+    }
+    @if (!string.IsNullOrWhiteSpace(tMessage))
+    {
+        <script>document.addEventListener('DOMContentLoaded', function(){ try{ if (window.appNotify) { window.appNotify.show('@(tTitle ?? "")', '@(tMessage.Replace("\"","\\\""))', '@tLevel'); } }catch(e){} });</script>
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,352 @@
+@page
+@model TinyGenerator.Pages.Stories.IndexModel
+@{
+    ViewData["Title"] = "Storie";
+    ViewData["PageDescription"] = "Visualizza e gestisci le storie salvate";
+}
+
+<div class="d-flex justify-content-between mb-3">
+    <h3>Storie salvate</h3>
+    <div>
+        <a class="btn btn-primary" asp-page="/Stories/Create">Nuova storia</a>
+    </div>
+</div>
+
+<table id="storiesTable" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Id</th>
+            <th>Timestamp</th>
+            <th>Prompt</th>
+            <th>Modello</th>
+            <th>Cartella</th>
+            <th>Caratteri</th>
+            <th>Test</th>
+            <th>Score</th>
+            <th>Valutazione</th>
+            <th>Approved</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var s in Model.Stories) {
+        var timestamp = DateTime.TryParse(s.Timestamp, out var dt) ? dt.ToString("dd/MM/yyyy HH:mm") : s.Timestamp;
+        <tr data-story-id="@s.Id" data-evaluations='@System.Text.Json.JsonSerializer.Serialize(s.Evaluations)'>
+            <td class="dt-control"></td>
+            <td>@s.Id</td>
+            <td>@timestamp</td>
+            <td style="max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">@s.Prompt</td>
+            <td>@s.Model</td>
+            <td>@(s.Folder ?? "-")</td>
+            <td>@s.CharCount.ToString("N0")</td>
+            <td>
+                @if (s.TestRunId.HasValue && s.TestStepId.HasValue)
+                {
+                    <a href="/Models?runId=@s.TestRunId" class="badge bg-success" title="Test Run ID: @s.TestRunId, Step ID: @s.TestStepId">✓ Run @s.TestRunId</a>
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </td>
+            <td>@s.Score</td>
+            <td>@(s.Evaluations.Any() ? $"{s.Evaluations.Average(e => e.TotalScore):F1}/100" : "-")</td>
+            <td>@(s.Approved ? "✅" : "❌")</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        Azioni
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" asp-page="/Stories/Details" asp-route-id="@s.Id">📄 Dettagli</a></li>
+                        <li><a class="dropdown-item" asp-page="/Stories/Edit" asp-route-id="@s.Id">✏️ Modifica</a></li>
+                        @if (!string.IsNullOrWhiteSpace(s.Folder))
+                        {
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" asp-page-handler="GenerateTts" asp-route-id="@s.Id" asp-route-folderName="@s.Folder" style="display:inline">
+                                    <button type="submit" class="dropdown-item">🔊 Genera TTS</button>
+                                </form>
+                            </li>
+                        }
+                        @if (Model.Evaluators.Any())
+                        {
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Valuta con agente</h6></li>
+                            @foreach (var evaluator in Model.Evaluators)
+                            {
+                                <li>
+                                    <form method="post" asp-page-handler="Evaluate" asp-route-id="@s.Id" asp-route-agentId="@evaluator.Id" style="display:inline">
+                                        <button type="submit" class="dropdown-item">🤖 @evaluator.Name</button>
+                                    </form>
+                                </li>
+                            }
+                        }
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@s.Id" class="delete-story-form" style="display:inline">
+                                <button type="submit" class="dropdown-item text-danger">🗑️ Elimina</button>
+                            </form>
+                        </li>
+                        <li>
+                            <a href="#" class="dropdown-item manual-eval-btn" data-story-id="@s.Id">✍️ Valutazione manuale</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/datatables/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables/css/buttons.bootstrap5.min.css" />
+    <!-- SweetAlert2 (compact confirmation) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <style>
+        /* SweetAlert2 compact popup styled to match Bootstrap */
+        .swal2-popup.swal2-small {
+            width: 420px !important;
+            padding: 1rem 1.25rem !important;
+            border-radius: .375rem !important;
+            font-size: .95rem !important;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        }
+        /* Layout: icon in left column, title+content stacked in right column */
+        .swal2-popup.swal2-small {
+            display: grid !important;
+            grid-template-columns: 40px 1fr !important;
+            grid-template-rows: auto auto auto !important;
+            gap: 6px 12px !important;
+            align-items: start !important;
+        }
+        .swal2-popup.swal2-small .swal2-icon {
+            grid-column: 1 / 2 !important;
+            grid-row: 1 / 3 !important;
+            justify-self: center !important;
+            align-self: start !important;
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+            margin: 0 !important;
+        }
+        .swal2-popup.swal2-small .swal2-title {
+            grid-column: 2 / 3 !important;
+            grid-row: 1 / 2 !important;
+            text-align: left !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .swal2-popup.swal2-small .swal2-content {
+            grid-column: 2 / 3 !important;
+            grid-row: 2 / 3 !important;
+            text-align: left !important;
+            margin: 0 !important;
+            padding-top: 4px !important;
+        }
+        /* Place action buttons on a dedicated row, centered horizontally */
+        .swal2-popup.swal2-small .swal2-actions {
+            grid-column: 1 / -1 !important;
+            grid-row: 3 / 4 !important;
+            display: flex !important;
+            justify-content: center !important;
+            gap: .5rem !important;
+            padding-top: .5rem !important;
+        }
+        .swal2-popup.swal2-small .swal2-actions .swal2-confirm,
+        .swal2-popup.swal2-small .swal2-actions .swal2-cancel {
+            margin: 0 !important;
+        }
+        .swal2-popup.swal2-small .swal2-title {
+            font-size: 1rem !important;
+            margin-bottom: .25rem !important;
+        }
+        .swal2-popup.swal2-small .swal2-actions .btn {
+            min-width: 86px;
+            margin: 0 .25rem;
+        }
+        /* Custom gold badge color for scores 8-10 */
+        .bg-gold {
+            background-color: #ffd700 !important;
+            color: #000 !important;
+        }
+    </style>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/js/dataTables.buttons.min.js"></script>
+    <script src="~/lib/datatables/js/buttons.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Function to get badge color based on score
+            function getScoreBadgeClass(score) {
+                if (score >= 0 && score <= 1) return 'bg-danger'; // rosso
+                if (score >= 2 && score <= 3) return 'bg-danger'; // arancio
+                if (score >= 4 && score <= 5) return 'bg-warning'; // giallo (usando info come giallo chiaro)
+                if (score >= 6 && score <= 7) return 'bg-success'; // verde
+                if (score >= 8 && score <= 10) return 'bg-success text-warning'; // verde
+                return 'bg-secondary'; // default
+            }
+
+            // Format function for child rows (evaluations)
+            function formatEvaluations(evaluations) {
+                if (!evaluations || evaluations.length === 0) {
+                    return '<div class="p-3"><em>Nessuna valutazione disponibile</em></div>';
+                }
+                
+                var html = '<div class="p-3"><h5>Valutazioni complete</h5>';
+                
+                evaluations.forEach(function(eval) {
+                    html += '<div class="card mb-3">';
+                    html += '<div class="card-header">';
+                    html += '<strong>' + (eval.Model || 'N/A') + '</strong> - Totale: <span class="badge bg-primary">' + eval.TotalScore + '/100</span>';
+                    html += '<small class="text-muted"> (' + (eval.Ts || '') + ')</small>';
+                    html += '</div>';
+                    html += '<div class="card-body"><div class="row">';
+                    
+                    // Left column
+                    html += '<div class="col-md-6"><ul class="list-group list-group-flush">';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Coerenza narrativa:</span> <span class="badge ' + getScoreBadgeClass(eval.NarrativeCoherenceScore) + '">' + eval.NarrativeCoherenceScore + '/10</span></li>';
+                    if (eval.NarrativeCoherenceDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.NarrativeCoherenceDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Struttura:</span> <span class="badge ' + getScoreBadgeClass(eval.StructureScore) + '">' + eval.StructureScore + '/10</span></li>';
+                    if (eval.StructureDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.StructureDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Caratterizzazione:</span> <span class="badge ' + getScoreBadgeClass(eval.CharacterizationScore) + '">' + eval.CharacterizationScore + '/10</span></li>';
+                    if (eval.CharacterizationDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.CharacterizationDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Dialoghi:</span> <span class="badge ' + getScoreBadgeClass(eval.DialoguesScore) + '">' + eval.DialoguesScore + '/10</span></li>';
+                    if (eval.DialoguesDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.DialoguesDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Ritmo:</span> <span class="badge ' + getScoreBadgeClass(eval.PacingScore) + '">' + eval.PacingScore + '/10</span></li>';
+                    if (eval.PacingDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.PacingDefects + '</small></li>';
+                    html += '</ul></div>';
+                    
+                    // Right column
+                    html += '<div class="col-md-6"><ul class="list-group list-group-flush">';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Originalità:</span> <span class="badge ' + getScoreBadgeClass(eval.OriginalityScore) + '">' + eval.OriginalityScore + '/10</span></li>';
+                    if (eval.OriginalityDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.OriginalityDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Stile:</span> <span class="badge ' + getScoreBadgeClass(eval.StyleScore) + '">' + eval.StyleScore + '/10</span></li>';
+                    if (eval.StyleDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.StyleDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Worldbuilding:</span> <span class="badge ' + getScoreBadgeClass(eval.WorldbuildingScore) + '">' + eval.WorldbuildingScore + '/10</span></li>';
+                    if (eval.WorldbuildingDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.WorldbuildingDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Coerenza tematica:</span> <span class="badge ' + getScoreBadgeClass(eval.ThematicCoherenceScore) + '">' + eval.ThematicCoherenceScore + '/10</span></li>';
+                    if (eval.ThematicCoherenceDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.ThematicCoherenceDefects + '</small></li>';
+                    html += '<li class="list-group-item d-flex justify-content-between"><span>Impatto emotivo:</span> <span class="badge ' + getScoreBadgeClass(eval.EmotionalImpactScore) + '">' + eval.EmotionalImpactScore + '/10</span></li>';
+                    if (eval.EmotionalImpactDefects) html += '<li class="list-group-item"><small class="text-muted">' + eval.EmotionalImpactDefects + '</small></li>';
+                    html += '</ul></div>';
+                    
+                    html += '</div>'; // close row
+                    
+                    if (eval.OverallEvaluation) {
+                        html += '<div class="mt-3"><strong>Valutazione complessiva:</strong><p class="mb-0">' + eval.OverallEvaluation + '</p></div>';
+                    }
+                    
+                    html += '</div></div>'; // close card-body and card
+                });
+                
+                html += '</div>';
+                return html;
+            }
+
+            var table = $('#storiesTable').DataTable({
+                pageLength: 25,
+                lengthChange: true,
+                stateSave: true,
+                stateSaveName: 'DataTables_stories',
+                stateDuration: -1,
+                responsive: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'colvis'
+                ],
+                columnDefs: [
+                    { orderable: false, targets: 0 },
+                    { orderable: false, targets: -1 }
+                ]
+            });
+
+            // Handle expand/collapse for evaluation details using DataTables child rows API
+            $('#storiesTable tbody').on('click', 'td.dt-control', function () {
+                var tr = $(this).closest('tr');
+                var row = table.row(tr);
+                
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                    $(this).removeClass('open');
+                } else {
+                    // Open this row
+                    var evaluationsJson = tr.attr('data-evaluations');
+                    var evaluations = evaluationsJson ? JSON.parse(evaluationsJson) : [];
+                    row.child(formatEvaluations(evaluations)).show();
+                    tr.addClass('shown');
+                    $(this).addClass('open');
+                }
+            });
+
+            // Intercept submit on delete forms and show SweetAlert2 confirmation
+            $('form.delete-story-form').on('submit', function (e) {
+                e.preventDefault();
+                var form = this;
+                Swal.fire({
+                    title: 'Eliminare la storia?',
+                    text: 'Questa azione non è reversibile.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Elimina',
+                    cancelButtonText: 'Annulla',
+                    customClass: { popup: 'swal2-small', confirmButton: 'btn btn-danger', cancelButton: 'btn btn-secondary' },
+                    buttonsStyling: false,
+                    width: 420
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+                // Manual evaluation flow: open SweetAlert2 modal to collect score + overall text
+                $(document).on('click', '.manual-eval-btn', function(e){
+                    e.preventDefault();
+                    var storyId = $(this).data('story-id');
+                    Swal.fire({
+                        title: 'Valutazione manuale',
+                        html: '<div class="mb-2">Punteggio totale (0-100):</div><input id="swal-score" type="number" min="0" max="100" class="swal2-input" placeholder="Es. 85">' +
+                              '<div class="mt-2">Valutazione complessiva (opzionale):</div><textarea id="swal-overall" class="swal2-textarea" placeholder="Breve commento"></textarea>',
+                        focusConfirm: false,
+                        showCancelButton: true,
+                        confirmButtonText: 'Salva valutazione',
+                        cancelButtonText: 'Annulla',
+                        customClass: { popup: 'swal2-small', confirmButton: 'btn btn-primary', cancelButton: 'btn btn-secondary' },
+                        preConfirm: () => {
+                            const scoreVal = document.getElementById('swal-score').value;
+                            const overallVal = document.getElementById('swal-overall').value || '';
+                            if (scoreVal === '' || isNaN(scoreVal)) {
+                                Swal.showValidationMessage('Inserisci un punteggio numerico (0-100)');
+                                return false;
+                            }
+                            const score = parseFloat(scoreVal);
+                            if (score < 0 || score > 100) {
+                                Swal.showValidationMessage('Il punteggio deve essere compreso tra 0 e 100');
+                                return false;
+                            }
+                            return { score: score, overall: overallVal };
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            const data = new FormData();
+                            data.append('id', storyId);
+                            data.append('score', result.value.score);
+                            data.append('overall', result.value.overall);
+                            fetch('?handler=ManualEvaluate', { method: 'POST', body: data })
+                                .then(r => { if (r.redirected) window.location = r.url; else window.location.reload(); })
+                                .catch(e => { Swal.fire('Errore', 'Impossibile salvare la valutazione: ' + e, 'error'); });
+                        }
+                    });
+                });
+        });
+    </script>
+}

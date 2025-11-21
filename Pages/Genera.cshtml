@@ -1,0 +1,184 @@
+@page
+@model GeneraModel
+@{
+    ViewData["Title"] = "Genera una storia lunga";
+    ViewData["PageDescription"] = "Crea una storia completa con trama, personaggi e capitoli";
+}
+
+<div class="note-card" style="max-width:900px; margin-bottom:18px">
+    <form id="genForm">
+        @Html.AntiForgeryToken()
+        <div style="margin-bottom:10px">
+            <label for="Prompt" class="note-title">Inserisci il prompt della storia</label>
+            <input class="keep-input" type="text" id="Prompt" name="Prompt" value="@Model.Prompt" required />
+        </div>
+        <div id="genError" role="alert" style="color:#b00020; margin-bottom:8px; display:none"></div>
+
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:8px">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label for="Writer" class="note-title" style="margin:0">Scegli writer</label>
+                <select id="Writer" name="Writer" class="keep-input" style="width:220px; padding:8px">
+                    <option value="All">Tutti (A, B, C)</option>
+                    <option value="A">Writer A (Planner)</option>
+                    <option value="B">Writer B (FreePlanner)</option>
+                    <option value="C">Writer C (Single-shot)</option>
+                </select>
+            </div>
+
+            <div style="margin-left:auto">
+                <button type="button" id="startBtn" class="action-btn primary" style="font-weight:600; padding:8px 14px">Avvia generazione</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<hr />
+<h2>Stato generazione (live):</h2>
+<div id="statusArea">
+    <div id="statusPre" class="status-list"><div class="status-msg">Pronto.</div></div>
+</div>
+
+<script src="~/lib/signalr/signalr.min.js"></script>
+<script>
+    const startBtn = document.getElementById('startBtn');
+    const statusPre = document.getElementById('statusPre');
+    let pollInterval = null;
+    let connection = null;
+
+    // helper: fetch and render history for a genId
+    async function loadHistory(id) {
+        try {
+            const p = await fetch(`?handler=progress&id=${encodeURIComponent(id)}`);
+            if (!p.ok) return;
+            const js = await p.json();
+            renderMessages(js.messages);
+            if (js.completed) {
+                appendMessage('✅ Completato.');
+                if (js.result) appendMessage('Risultato finale (estratto):\n' + js.result.substring(0,1000), 'result');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // open a SignalR connection and join a group for genId
+    async function connectSignalRAndJoin(genId) {
+        try {
+            // prefer to reuse the global appSignalR connection if available
+            if (window.appSignalR && window.appSignalR.connection) {
+                connection = window.appSignalR.connection;
+                connection.on('ProgressAppended', (id, message, extraClass) => {
+                    if (id !== genId) return;
+                    appendMessage(message, extraClass);
+                });
+                connection.on('ProgressCompleted', (id, finalResult) => {
+                    if (id !== genId) return;
+                    appendMessage('✅ Completato.');
+                    if (finalResult) appendMessage('Risultato finale (estratto):\n' + (finalResult.substring ? finalResult.substring(0,1000) : finalResult), 'result');
+                });
+                await window.appSignalR.joinGroup(genId);
+                return;
+            }
+            if (!window.signalR) {
+                console.warn('SignalR not available');
+                return;
+            }
+            connection = new signalR.HubConnectionBuilder().withUrl('/progressHub').withAutomaticReconnect().build();
+
+            connection.on('ProgressAppended', (id, message, extraClass) => {
+                if (id !== genId) return;
+                // append message
+                appendMessage(message, extraClass);
+            });
+            connection.on('ProgressCompleted', (id, finalResult) => {
+                if (id !== genId) return;
+                appendMessage('✅ Completato.');
+                if (finalResult) appendMessage('Risultato finale (estratto):\n' + (finalResult.substring ? finalResult.substring(0,1000) : finalResult), 'result');
+            });
+
+            await connection.start();
+            await connection.invoke('JoinGroup', genId);
+        } catch (e) { console.error('SignalR connect error', e); }
+    }
+
+    startBtn.addEventListener('click', async () => {
+        const prompt = document.getElementById('Prompt').value;
+        const genError = document.getElementById('genError');
+        if (!prompt || prompt.trim().length === 0) {
+            if (genError) {
+                genError.textContent = 'Inserisci il prompt';
+                genError.style.display = 'block';
+            }
+            document.getElementById('Prompt').focus();
+            return;
+        } else if (genError) {
+            genError.textContent = '';
+            genError.style.display = 'none';
+        }
+
+        clearMessages();
+        appendMessage('🟡 Avvio...');
+    // send start request (include antiforgery token automatically by using the form)
+    const form = document.getElementById('genForm');
+    const fd = new FormData(form);
+    const res = await fetch('?handler=start', { method: 'POST', body: fd });
+        if (!res.ok) {
+            const text = await res.text();
+            appendMessage('Errore avvio: ' + text, 'error');
+            return;
+        }
+        const data = await res.json();
+        const id = data.id;
+        // persist last gen id so user can come back to page and reconnect
+        try { localStorage.setItem('lastGenId', id); } catch { }
+        appendMessage('🟢 Generazione avviata. id: ' + id);
+        // load history and start SignalR for live updates
+        await loadHistory(id);
+        await connectSignalRAndJoin(id);
+    });
+
+    // on page load, if there's a lastGenId in localStorage, reattach to it (so the page is persistent)
+    (async () => {
+        try {
+            const existing = localStorage.getItem('lastGenId');
+            if (existing) {
+                clearMessages();
+                appendMessage('🔄 Ricollegamento alla generazione ' + existing + '...');
+                await loadHistory(existing);
+                await connectSignalRAndJoin(existing);
+            }
+        } catch (e) { console.error(e); }
+    })();
+    // message helpers
+    function clearMessages() { statusPre.innerHTML = ''; }
+    function appendMessage(msg, extraClass) {
+        const el = document.createElement('div');
+        el.className = 'status-msg' + (extraClass ? (' ' + extraClass) : '');
+        
+        // Apply pastel colors for success/error
+        if (extraClass === 'success') {
+            el.style.backgroundColor = '#d4edda';
+            el.style.color = '#155724';
+            el.style.padding = '8px';
+            el.style.borderRadius = '4px';
+            el.style.marginBottom = '4px';
+        } else if (extraClass === 'error') {
+            el.style.backgroundColor = '#f8d7da';
+            el.style.color = '#721c24';
+            el.style.padding = '8px';
+            el.style.borderRadius = '4px';
+            el.style.marginBottom = '4px';
+        }
+        
+        el.textContent = msg;
+        statusPre.appendChild(el);
+    }
+    function renderMessages(messages) { clearMessages(); if (!messages) return; messages.forEach(m => appendMessage(m)); }
+
+    // hide error when user edits prompt
+    const promptInput = document.getElementById('Prompt');
+    if (promptInput) {
+        promptInput.addEventListener('input', () => {
+            const genError = document.getElementById('genError');
+            if (genError) { genError.textContent = ''; genError.style.display = 'none'; }
+        });
+    }
+</script>
