@@ -7,14 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Semantic Kernel packages removed: using local stubs for lightweight testing -->
-    <!-- SQLite provider used by CostController -->
+    <!-- Semantic Kernel packages - keeping for gradual migration -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
-  <PackageReference Include="Microsoft.SemanticKernel" Version="1.67.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.67.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.67.0-preview" />
-  <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.67.0" />
-  <PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.51.0-preview" />
-  <PackageReference Include="Dapper" Version="2.0.123" />
-  <!-- NOTE: sqlite memory package omitted — if memory store package is required, we'll add the correct package id/version after checking NuGet. -->
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.67.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.51.0-preview" />
+    
+    <!-- Microsoft Agent Framework packages -->
+    <PackageReference Include="Microsoft.Agents.Core" Version="1.0.1" />
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251114.1" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.0.0-preview.1.25560.10" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.5.0-beta.1" />
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+    
+    <PackageReference Include="Dapper" Version="2.0.123" />
   </ItemGroup>
 </Project>

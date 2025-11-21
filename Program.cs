@@ -67,6 +67,10 @@ builder.Services.AddSingleton<NotificationService>();
 builder.Services.AddSingleton<IKernelFactory, KernelFactory>();
 // Also register concrete KernelFactory so services can depend on implementation-specific features
 builder.Services.AddSingleton<KernelFactory>(sp => (KernelFactory)sp.GetRequiredService<IKernelFactory>());
+
+// MAF Agent Factory (Microsoft Agent Framework)
+builder.Services.AddSingleton<MAFAgentFactory>();
+
 // Agent configuration service (with ProgressService for real-time logging)
 builder.Services.AddSingleton<AgentService>(sp => new AgentService(
     sp.GetRequiredService<DatabaseService>(),
